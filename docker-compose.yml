@@ -1,0 +1,12 @@
+# CoSiMo mockup — served on 127.0.0.1:4010 (loopback only, no public ports),
+# matching the other apps on this host. The existing shared cloudflared tunnel
+# (host network) reaches it at http://localhost:4010 — just add a public
+# hostname for it in the Cloudflare Zero Trust dashboard pointing there.
+services:
+  web:
+    build: .
+    image: cosimo-mockup
+    container_name: cosimo-mockup
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4010:4010"

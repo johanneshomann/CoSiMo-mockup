@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --app-bg: #ffffff;
+  --app-ink: #141414;
+}
+
+/* Theme primitives driven by the active scheme's two colours. Only used inside
+   the app surface, where --app-bg / --app-ink are set on the root element. */
+@layer components {
+  .app-surface {
+    background-color: var(--app-bg);
+    color: var(--app-ink);
+  }
+  .app-panel {
+    background-color: var(--app-bg);
+    border: 1px solid color-mix(in srgb, var(--app-ink) 15%, transparent);
+  }
+  .ink {
+    color: var(--app-ink);
+  }
+  .ink-soft {
+    color: color-mix(in srgb, var(--app-ink) 55%, transparent);
+  }
+  .ink-faint {
+    color: color-mix(in srgb, var(--app-ink) 35%, transparent);
+  }
+  .hover-ink:hover {
+    color: var(--app-ink);
+  }
+  .row-hover:hover {
+    background-color: color-mix(in srgb, var(--app-ink) 8%, transparent);
+  }
+  .field {
+    border: 1px solid color-mix(in srgb, var(--app-ink) 25%, transparent);
+  }
+  .btn-ghost {
+    border: 1px solid color-mix(in srgb, var(--app-ink) 25%, transparent);
+    color: var(--app-ink);
+  }
+  .btn-ghost:hover {
+    background-color: color-mix(in srgb, var(--app-ink) 8%, transparent);
+  }
+  .btn-ghost[aria-pressed="true"] {
+    background-color: var(--app-ink);
+    color: var(--app-bg);
+    border-color: var(--app-ink);
+  }
+  .btn-solid {
+    background-color: var(--app-ink);
+    color: var(--app-bg);
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
