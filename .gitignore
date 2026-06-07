@@ -16,6 +16,12 @@ pnpm-debug.log*
 .env
 .env.*
 
+# claude code local settings (machine-specific)
+.claude/
+
+# test coverage
+coverage
+
 # editor / os
 .DS_Store
 *.local
