@@ -53,44 +53,44 @@ export interface FaceParams {
    pupils centred, the lazy asymmetric smile. */
 export const FACE_STATES: Record<FaceEmotion, FaceParams> = {
   neutral: {
-    eyeOpenL: 1, eyeOpenR: 1, eyeRound: 0.12, gazeX: 0, gazeY: 0,
+    eyeOpenL: 1, eyeOpenR: 1, lidCurve: 0, eyeRound: 0.12, gazeX: 0, gazeY: 0,
     browLiftL: 0, browLiftR: 0, browSlantL: 0, browSlantR: 0,
     mouthWidth: 44, mouthY: 158, mouthCurve: 45, mouthOpen: 0, tilt: 0,
   },
   happy: {
-    eyeOpenL: 0.55, eyeOpenR: 0.55, eyeRound: 0.1, gazeX: 0, gazeY: 0,
+    eyeOpenL: 0.12, eyeOpenR: 0.12, lidCurve: 0.9, eyeRound: 0.1, gazeX: 0, gazeY: 0,
     browLiftL: 6, browLiftR: 6, browSlantL: 2, browSlantR: 2,
-    mouthWidth: 48, mouthY: 156, mouthCurve: 58, mouthOpen: 0.3, tilt: 0,
+    mouthWidth: 50, mouthY: 154, mouthCurve: 55, mouthOpen: 0.45, tilt: 0,
   },
   thinking: {
-    eyeOpenL: 0.85, eyeOpenR: 0.5, eyeRound: 0.15, gazeX: -0.7, gazeY: -0.6,
+    eyeOpenL: 0.85, eyeOpenR: 0.55, lidCurve: 0, eyeRound: 0.15, gazeX: -0.7, gazeY: -0.6,
     browLiftL: 12, browLiftR: -2, browSlantL: 10, browSlantR: 2,
     mouthWidth: 18, mouthY: 164, mouthCurve: 8, mouthOpen: 0, tilt: -2,
   },
   listening: {
-    eyeOpenL: 1, eyeOpenR: 1, eyeRound: 0.35, gazeX: 0.2, gazeY: 0,
+    eyeOpenL: 1, eyeOpenR: 1, lidCurve: 0, eyeRound: 0.35, gazeX: 0.2, gazeY: 0,
     browLiftL: 8, browLiftR: 8, browSlantL: 0, browSlantR: 0,
     mouthWidth: 24, mouthY: 160, mouthCurve: 14, mouthOpen: 0.12, tilt: 2,
   },
   speaking: {
-    eyeOpenL: 0.9, eyeOpenR: 0.9, eyeRound: 0.2, gazeX: 0, gazeY: 0,
+    eyeOpenL: 0.9, eyeOpenR: 0.9, lidCurve: 0, eyeRound: 0.2, gazeX: 0, gazeY: 0,
     browLiftL: 3, browLiftR: 3, browSlantL: 0, browSlantR: 0,
-    mouthWidth: 28, mouthY: 166, mouthCurve: -10, mouthOpen: 0.75, tilt: 0,
+    mouthWidth: 26, mouthY: 166, mouthCurve: -8, mouthOpen: 0.8, tilt: 0,
   },
   sleeping: {
-    eyeOpenL: 0.04, eyeOpenR: 0.04, eyeRound: 0, gazeX: 0, gazeY: 0.3,
+    eyeOpenL: 0, eyeOpenR: 0, lidCurve: -0.55, eyeRound: 0, gazeX: 0, gazeY: 0,
     browLiftL: -6, browLiftR: -6, browSlantL: -2, browSlantR: -2,
     mouthWidth: 24, mouthY: 164, mouthCurve: 12, mouthOpen: 0, tilt: 1.5,
   },
   sad: {
-    eyeOpenL: 0.65, eyeOpenR: 0.65, eyeRound: 0.1, gazeX: 0, gazeY: 0.4,
+    eyeOpenL: 0.65, eyeOpenR: 0.65, lidCurve: -0.15, eyeRound: 0.1, gazeX: 0, gazeY: 0.4,
     browLiftL: 5, browLiftR: 5, browSlantL: 14, browSlantR: 14,
-    mouthWidth: 38, mouthY: 166, mouthCurve: -30, mouthOpen: 0, tilt: -1.5,
+    mouthWidth: 36, mouthY: 166, mouthCurve: -26, mouthOpen: 0, tilt: -1.5,
   },
   surprised: {
-    eyeOpenL: 1, eyeOpenR: 1, eyeRound: 1, gazeX: 0, gazeY: -0.2,
+    eyeOpenL: 1, eyeOpenR: 1, lidCurve: 0, eyeRound: 1, gazeX: 0, gazeY: -0.2,
     browLiftL: 16, browLiftR: 16, browSlantL: 0, browSlantR: 0,
-    mouthWidth: 20, mouthY: 172, mouthCurve: -20, mouthOpen: 1, tilt: 0,
+    mouthWidth: 18, mouthY: 172, mouthCurve: -18, mouthOpen: 1, tilt: 0,
   },
 };
 

@@ -70,12 +70,17 @@ interface EyeProps {
   side: "L" | "R";
 }
 
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+
 /**
- * One scribble eye: overlapping offset loops plus a filled pupil blob. The
- * loops are clean ellipses — the turbulence filter turns them into scribbles.
- * Expression comes from transforms: openness squashes the nest (blink/sleep),
- * roundness inflates it (surprised), lift raises it (the eyebrow role), slant
- * tilts it (worry), and gaze shifts the pupil inside the loops.
+ * One scribble eye. Open eyes are a nest of overlapping loops with a filled
+ * pupil (the turbulence filter roughens them into scribbles); as openness
+ * drops below ~0.45 the nest cross-fades into a drawn lid stroke whose shape
+ * comes from lidCurve (+ arches up for happy, − relaxes down for sleep).
+ * This avoids squashing the loops into smeared artifacts. Roundness inflates
+ * the nest (surprised), lift raises the eye (the eyebrow role), slant tilts
+ * it (worry), gaze shifts the pupil inside the loops. The single outer lash
+ * sits outside the cross-fade so it survives closed eyes.
  */
 function ScribbleEye({ p, side }: EyeProps) {
   const { x, y } = side === "L" ? EYE_L : EYE_R;
@@ -85,45 +90,55 @@ function ScribbleEye({ p, side }: EyeProps) {
   const rot = (side === "L" ? -slant : slant) * 0.8;
 
   const sx = 1 + p.eyeRound * 0.3;
-  const sy = sx * Math.max(0.13, open);
+  const sy = sx * Math.max(0.5, open);
+  const nestVis = clamp01((open - 0.2) / 0.25);
+
+  const lidY = y + 3;
+  const lidPath =
+    `M${x - 15} ${lidY} Q${x} ${lidY - p.lidCurve * 20} ${x + 15} ${lidY}`;
 
   return (
-    <g
-      transform={
-        `translate(${x} ${y - lift * 0.6}) rotate(${rot})` +
-        ` scale(${sx} ${sy}) translate(${-x} ${-y})`
-      }
-    >
+    <g transform={`translate(0 ${-lift * 0.6}) rotate(${rot} ${x} ${y})`}>
+      {/* single outer lash — a short plain flick */}
       {side === "L" ? (
-        <>
-          <ellipse cx={x} cy={y} rx={17} ry={19} transform={`rotate(-8 ${x} ${y})`} />
-          <ellipse cx={x + 2} cy={y - 2} rx={11} ry={12.5} transform={`rotate(10 ${x} ${y})`} />
-          <ellipse cx={x + 1} cy={y + 2} rx={5.5} ry={7} />
-          {/* single outer lash — a short plain flick */}
-          <path d={`M${x - 16} ${y - 10} L${x - 22.5} ${y - 15.5}`} />
-        </>
+        <path d={`M${x - 16} ${y - 10} L${x - 22.5} ${y - 15.5}`} />
       ) : (
-        <>
-          <ellipse cx={x} cy={y} rx={16} ry={17} transform={`rotate(12 ${x} ${y})`} />
-          <ellipse cx={x - 8} cy={y - 6} rx={10} ry={11} transform={`rotate(-15 ${x} ${y})`} />
-          {/* single outer lash — a short plain flick */}
-          <path d={`M${x + 14} ${y - 9.5} L${x + 20.5} ${y - 14.5}`} />
-        </>
+        <path d={`M${x + 14} ${y - 9.5} L${x + 20.5} ${y - 14.5}`} />
       )}
-      {/* pupil — dense filled blob, slightly low in the nest like the artwork */}
-      <g transform={`translate(${p.gazeX * 5} ${p.gazeY * 4})`}>
-        {side === "L" ? (
-          <>
-            <circle cx={x - 3} cy={y + 14} r={6} fill="currentColor" stroke="none" />
-            <ellipse cx={x - 2} cy={y + 14} rx={8} ry={6.5} />
-          </>
-        ) : (
-          <>
-            <circle cx={x - 1} cy={y + 5} r={6.5} fill="currentColor" stroke="none" />
-            <ellipse cx={x - 1} cy={y + 6} rx={8.5} ry={7.5} />
-          </>
-        )}
-      </g>
+      {nestVis > 0.01 && (
+        <g
+          opacity={nestVis}
+          transform={`translate(${x} ${y}) scale(${sx} ${sy}) translate(${-x} ${-y})`}
+        >
+          {side === "L" ? (
+            <>
+              <ellipse cx={x} cy={y} rx={17} ry={19} transform={`rotate(-8 ${x} ${y})`} />
+              <ellipse cx={x + 2} cy={y - 2} rx={11} ry={12.5} transform={`rotate(10 ${x} ${y})`} />
+              <ellipse cx={x + 1} cy={y + 2} rx={5.5} ry={7} />
+            </>
+          ) : (
+            <>
+              <ellipse cx={x} cy={y} rx={16} ry={17} transform={`rotate(12 ${x} ${y})`} />
+              <ellipse cx={x - 8} cy={y - 6} rx={10} ry={11} transform={`rotate(-15 ${x} ${y})`} />
+            </>
+          )}
+          {/* pupil — dense filled blob, slightly low in the nest */}
+          <g transform={`translate(${p.gazeX * 5} ${p.gazeY * 4})`}>
+            {side === "L" ? (
+              <>
+                <circle cx={x - 3} cy={y + 14} r={6} fill="currentColor" stroke="none" />
+                <ellipse cx={x - 2} cy={y + 14} rx={8} ry={6.5} />
+              </>
+            ) : (
+              <>
+                <circle cx={x - 1} cy={y + 5} r={6.5} fill="currentColor" stroke="none" />
+                <ellipse cx={x - 1} cy={y + 6} rx={8.5} ry={7.5} />
+              </>
+            )}
+          </g>
+        </g>
+      )}
+      {nestVis < 0.99 && <path opacity={1 - nestVis} d={lidPath} />}
     </g>
   );
 }
@@ -139,8 +154,11 @@ function mouthPath(p: FaceParams) {
   const c = p.mouthCurve;
   const lx = MOUTH_CX - w;
   const rx = MOUTH_CX + w;
-  const ly = p.mouthY - 0.45 * c;
-  const ry = p.mouthY + 0.35 * c;
+  // The artwork's lazy left-high/right-low tilt; levels out as the mouth
+  // opens so open shapes (speaking, surprised "O") stay round.
+  const tf = 1 - p.mouthOpen;
+  const ly = p.mouthY - 0.45 * c * tf;
+  const ry = p.mouthY + 0.35 * c * tf;
   const c1x = MOUTH_CX - 0.9 * p.mouthWidth;
   const c2x = MOUTH_CX + 0.5 * p.mouthWidth;
   const c1y = p.mouthY + 0.85 * c;
@@ -211,8 +229,13 @@ export default function CosimoFaceAnimated({
   const p = useTweenedParams(FACE_STATES[emotion], duration);
 
   const ambient = idle && !IN_TEST;
+  // Only blink in poses with open eyes; squashing a drawn lid looks broken.
+  const target = FACE_STATES[emotion];
   const blinking =
-    ambient && emotion !== "sleeping" && emotion !== "surprised";
+    ambient &&
+    emotion !== "surprised" &&
+    target.eyeOpenL > 0.5 &&
+    target.eyeOpenR > 0.5;
   const talking = ambient && emotion === "speaking";
 
   // useId may contain colons, which break url(#…) references.
@@ -220,7 +243,10 @@ export default function CosimoFaceAnimated({
 
   return (
     <svg
-      viewBox="0 0 260 200"
+      // The artwork lives on a 260×200 canvas; the padding absorbs inflated
+      // poses (surprised eyes, the happy grin) plus the wobble filter so no
+      // expression clips at the edges.
+      viewBox="-16 -24 292 240"
       className={className}
       style={style}
       fill="none"

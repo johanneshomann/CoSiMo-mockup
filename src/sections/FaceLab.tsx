@@ -21,7 +21,7 @@ export default function FaceLab() {
         <CosimoFaceAnimated
           emotion={emotion}
           idle={idle}
-          className="w-[72%] text-neutral-900"
+          className="w-[80%] text-neutral-900"
         />
       </div>
 
