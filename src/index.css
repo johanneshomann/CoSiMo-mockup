@@ -77,6 +77,8 @@
     transform: scaleY(1.15);
   }
 }
+/* The abstract entities (blob, circle, line) animate via their ambient
+   clock in JS; only the face's blink and talk pulses are CSS keyframes. */
 .cosimo-blink,
 .cosimo-talk {
   transform-box: fill-box;

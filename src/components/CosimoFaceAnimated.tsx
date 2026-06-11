@@ -1,64 +1,24 @@
-import { useEffect, useId, useRef, useState } from "react";
 import {
   FACE_STATES,
-  type FaceEmotion,
   type FaceParams,
 } from "../face/states";
+import {
+  IN_TEST,
+  useTweenedParams,
+  type ScribbleEntityProps,
+} from "../face/shared";
+import ScribbleCanvas from "./ScribbleCanvas";
 
 /**
  * The CoSiMo face, animatable between expressions. Geometry is traced from
  * the original scribble artwork: eyes are nests of overlapping loops with a
- * dense filled pupil (the top loops double as eyebrows), the nose is one
- * long J-stroke with a hooked base, the mouth a single lazy asymmetric curve.
- *
- * Morphing tweens the numeric FaceParams with requestAnimationFrame and
- * rebuilds/transforms the geometry each frame — CSS transitions on path `d`
- * are not reliable cross-browser, plain numbers are.
- *
- * On top of that, a turbulence displacement filter wobbles every stroke and
- * a faint offset second pass imitates pen overdraw.
+ * dense filled pupil, the nose a short soft stroke, the mouth a single lazy
+ * asymmetric curve. Morphing tweens the numeric FaceParams and rebuilds the
+ * geometry each frame (see face/shared.ts); the scribble look comes from
+ * ScribbleCanvas (turbulence wobble + pen overdraw).
  */
 
-const PARAM_KEYS = Object.keys(FACE_STATES.neutral) as (keyof FaceParams)[];
-
-/** Vitest sets VITEST in the env; snap instead of tweening under jsdom. */
-const IN_TEST = Boolean(
-  (globalThis as { process?: { env?: Record<string, string | undefined> } })
-    .process?.env?.VITEST,
-);
-
-function useTweenedParams(target: FaceParams, durationMs: number): FaceParams {
-  const [params, setParams] = useState(target);
-  const paramsRef = useRef(params);
-  paramsRef.current = params;
-  const firstRender = useRef(true);
-
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    if (durationMs <= 0 || typeof requestAnimationFrame !== "function") {
-      setParams(target);
-      return;
-    }
-    const from = { ...paramsRef.current };
-    const start = performance.now();
-    let raf = requestAnimationFrame(function step(now) {
-      const t = Math.min(1, (now - start) / durationMs);
-      const k = 1 - Math.pow(1 - t, 3); // ease-out cubic
-      const next = {} as FaceParams;
-      for (const key of PARAM_KEYS) {
-        next[key] = from[key] + (target[key] - from[key]) * k;
-      }
-      setParams(next);
-      if (t < 1) raf = requestAnimationFrame(step);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [target, durationMs]);
-
-  return params;
-}
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 /* Layout constants, traced from the artwork (mapped onto the 260×200 canvas). */
 const EYE_L = { x: 48, y: 31 };
@@ -70,17 +30,15 @@ interface EyeProps {
   side: "L" | "R";
 }
 
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-
 /**
  * One scribble eye. Open eyes are a nest of overlapping loops with a filled
- * pupil (the turbulence filter roughens them into scribbles); as openness
- * drops below ~0.45 the nest cross-fades into a drawn lid stroke whose shape
- * comes from lidCurve (+ arches up for happy, − relaxes down for sleep).
- * This avoids squashing the loops into smeared artifacts. Roundness inflates
- * the nest (surprised), lift raises the eye (the eyebrow role), slant tilts
- * it (worry), gaze shifts the pupil inside the loops. The single outer lash
- * sits outside the cross-fade so it survives closed eyes.
+ * pupil; as openness drops below ~0.45 the nest cross-fades into a drawn lid
+ * stroke whose shape comes from lidCurve (+ arches up for happy, − relaxes
+ * down for sleep). This avoids squashing the loops into smeared artifacts.
+ * Roundness inflates the nest (surprised), lift raises the eye (the eyebrow
+ * role), slant tilts it (worry), gaze shifts the pupil inside the loops.
+ * The single outer lash sits outside the cross-fade so it survives closed
+ * eyes.
  */
 function ScribbleEye({ p, side }: EyeProps) {
   const { x, y } = side === "L" ? EYE_L : EYE_R;
@@ -206,17 +164,6 @@ function FaceStrokes({
   );
 }
 
-export interface CosimoFaceAnimatedProps {
-  emotion: FaceEmotion;
-  className?: string;
-  strokeWidth?: number;
-  style?: React.CSSProperties;
-  /** Morph duration in ms. Defaults to 350 (0 under test). */
-  transitionMs?: number;
-  /** Ambient motion: idle blinking and the speaking mouth pulse. */
-  idle?: boolean;
-}
-
 export default function CosimoFaceAnimated({
   emotion,
   className,
@@ -224,7 +171,7 @@ export default function CosimoFaceAnimated({
   style,
   transitionMs,
   idle = true,
-}: CosimoFaceAnimatedProps) {
+}: ScribbleEntityProps) {
   const duration = transitionMs ?? (IN_TEST ? 0 : 350);
   const p = useTweenedParams(FACE_STATES[emotion], duration);
 
@@ -238,59 +185,18 @@ export default function CosimoFaceAnimated({
     target.eyeOpenR > 0.5;
   const talking = ambient && emotion === "speaking";
 
-  // useId may contain colons, which break url(#…) references.
-  const filterId = `cosimo-scribble-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
-
   return (
-    <svg
-      // The artwork lives on a 260×200 canvas; the padding absorbs inflated
-      // poses (surprised eyes, the happy grin) plus the wobble filter so no
-      // expression clips at the edges.
-      viewBox="-16 -24 292 240"
-      className={className}
-      style={style}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <defs>
-        <filter id={filterId} x="-20%" y="-20%" width="140%" height="140%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.014"
-            numOctaves="2"
-            seed="7"
-            result="noise"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="4"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </defs>
-      <g filter={`url(#${filterId})`}>
+    <ScribbleCanvas className={className} style={style} strokeWidth={strokeWidth}>
+      {(mainPass) => (
         <g transform={`rotate(${p.tilt} 130 110)`}>
-          <FaceStrokes p={p} blinking={blinking} talking={talking} mainPass />
-        </g>
-        {/* overdraw pass — a faint, slightly offset retrace of every stroke */}
-        <g
-          transform={`rotate(${p.tilt - 0.7} 130 110) translate(1.6 -1)`}
-          opacity={0.25}
-          strokeWidth={strokeWidth * 0.6}
-        >
           <FaceStrokes
             p={p}
             blinking={blinking}
             talking={talking}
-            mainPass={false}
+            mainPass={mainPass}
           />
         </g>
-      </g>
-    </svg>
+      )}
+    </ScribbleCanvas>
   );
 }

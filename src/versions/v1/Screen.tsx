@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAppearance } from "../../appearance/AppearanceContext";
+import CosimoFaceAnimated from "../../components/CosimoFaceAnimated";
 import {
   ArrowRightIcon,
   CameraIcon,
@@ -27,6 +28,14 @@ export default function Screen({ device }: ScreenProps) {
   const [moreOpen, setMoreOpen] = useState(false);
 
   const Mark = character.Mark;
+  // On screens the face character is alive (idle blinking); physical
+  // surfaces (NFC card print, embossed handheld) keep the static mark.
+  const CharacterMark = ({ className }: { className?: string }) =>
+    character.id === "face" ? (
+      <CosimoFaceAnimated emotion="neutral" className={className} />
+    ) : (
+      <Mark className={className} />
+    );
   const themeStyle = {
     "--app-bg": scheme.bg,
     "--app-ink": scheme.ink,
@@ -40,7 +49,7 @@ export default function Screen({ device }: ScreenProps) {
         style={themeStyle}
       >
         <div className="flex flex-1 items-center justify-center p-4">
-          <Mark className="ink h-auto w-[58%] max-w-[170px]" />
+          <CharacterMark className="ink h-auto w-[58%] max-w-[170px]" />
         </div>
         <div className="px-5 pb-6">
           <div className="relative flex items-center justify-center gap-4">
@@ -79,7 +88,7 @@ export default function Screen({ device }: ScreenProps) {
 
       {/* character */}
       <div className="flex flex-1 items-center justify-center p-6">
-        <Mark className="ink h-auto w-[64%] max-w-[300px]" />
+        <CharacterMark className="ink h-auto w-[64%] max-w-[300px]" />
       </div>
 
       {/* bottom dock */}
